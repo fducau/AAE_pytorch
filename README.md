@@ -23,7 +23,8 @@ $$L(x, x') = L_R(x, x') + KL(q(z|x)||p(z)) = - \sum_{k=1}^N x_k \log(x'_k) + (1-
 
 Where $$q(z|x)$$ is the encoder of our network and $$p(z)$$ is the prior distribution imposed on the latent code. 
 (vae reference https://jaan.io/what-is-variational-autoencoder-vae-tutorial)
-## Adversarial Autoencoders
+## Adversarial Autoencoders (AAE)
+#### AAE as Generative Model
 One of the main drawbacks of variational autoencoders is that, the KL divergence term does not have a closed form solution except for a handful of distributions. Furthermore it is not straightforward to use discrete distributions on for $$z$$, one alternative for this is \ref{discrete variational autoencoders https://arxiv.org/abs/1609.02200}. 
 
 Adversarial autoencodesr (AAE) avoid using the KL divergence altogether by using adversarial learning. Instead, a new network is trained to discriminatively predict whether a sample comes from the hidden code of the autoencoder or from the distribution $$p(z)$$ determined by the user. The loss of the encoder is now composed by the reconstruction loss plus the loss given by the discriminator network.
@@ -154,5 +155,9 @@ The training procedure for this architecture for each minibatch is performed as 
         G_loss.backward()
         Q_generator.step()
 ```
+
+
+
+#### AAE to learn disentangled representations
 
 
