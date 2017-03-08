@@ -30,7 +30,7 @@ The image shows schematically how AAEs work. The top row is equivalent to an VAE
 ![a](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_001.png)
 On the adversarial regularization part the discriminator recieves $$z$$ distributed as $$q(z|x)$$ and $$z'$$ sampled from the true prior $$p(z)$$ and assigns a probability to each of coming from $$p(z)$$. The loss incurred is backpropagated through the discriminator first to update its weights. Then the process is repeated and the generator (encoder) updates its parameters.
 
-We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution p(z). This modification allows us to use a broader set of distributions as priors for the latent code. 
+We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution $$p(z)$$. This modification allows us to use a broader set of distributions as priors for the latent code. 
 
 ##### Network definition
 Before getting into the training procedure used for this model, we look at some lines of how to implement what we have up to now in Pytorch. For the encoder, decoder and discriminator networks we will use simple feed forward neural networks with three 1000 hidden state layers with relu nonlinear functions and dropout.
@@ -118,7 +118,7 @@ The training procedure for this architecture for each minibatch is performed as 
 2. Create a latent representation z = Q(x) and a sample z’ from the prior p(z), run each one through the discriminator and compute the score assigned to each (D(z) and D(z’)). 
 ``` Python
     Q.eval()    
-    z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
+    z_real_gauss = Variable(torch.randn(train_batch_size, z_dim) * 5)   # Sample from N(0,5)
     if torch.cuda.is_available():
         z_real_gauss = z_real_gauss.cuda()
     z_fake_gauss = Q(X)
@@ -155,6 +155,8 @@ The training procedure for this architecture for each minibatch is performed as 
 ```
 
 ##### Generating images
+Now we attempt to look at how the AAE encodes images a 2D Gaussian latent representation with standard deviation 10. For this we first train the model and then use the generator part with an input going from -10 to 10 for each of the latent dimensions. 
+
 
 
 
