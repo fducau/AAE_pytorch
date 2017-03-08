@@ -24,6 +24,7 @@ cuda = torch.cuda.is_available()
 
 seed = 10
 
+
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 n_classes = 10
 z_dim = 10
@@ -79,6 +80,7 @@ class Q_net(nn.Module):
 
         return xgauss
 
+
 # Decoder
 class P_net(nn.Module):
     def __init__(self):
@@ -119,6 +121,7 @@ def save_model(model, filename):
     print('Best model so far, saving it...')
     torch.save(model.state_dict(), filename)
 
+<<<<<<< HEAD
 def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
     '''
     Print loss
@@ -127,7 +130,6 @@ def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
                                                                                    D_loss_gauss.data[0],
                                                                                    G_loss.data[0],
                                                                                    recon_loss.data[0]))
-
 
 def create_latent(Q, loader):
     '''
@@ -182,6 +184,7 @@ def classification_accuracy(Q, data_loader):
 
     test_loss /= len(data_loader)
     return 100. * correct / len(data_loader.dataset)
+
 
 
 ####################
@@ -297,7 +300,6 @@ def generate_model(savefolder='./'):
         if epoch == 75:
             P_decoder = optim.Adam(P.parameters(), lr=gen_lr / 10.)
             Q_encoder = optim.Adam(Q.parameters(), lr=gen_lr / 10.)
-
             Q_generator = optim.Adam(Q.parameters(), lr=reg_lr / 10.)
             D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr / 10.)
 
@@ -317,8 +319,3 @@ def generate_model(savefolder='./'):
 
 if __name__ == '__main__':
     generate_model()
-
-
-
-
-
