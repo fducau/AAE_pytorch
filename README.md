@@ -1,130 +1,147 @@
-<dl>
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>README.md</title><style></style></head><body id="preview">
-<h1><a id="AAE_pytorch_0"></a>AAE_pytorch</h1>
-<p>Adversarial Autoencoders in Pytorch</p>
-<p>[intro]</p>
-<h2><a id="Background_7"></a>Background</h2>
-<h5><a id="Denoising_Autoencoders_dAE_8"></a>Denoising Autoencoders (dAE)</h5>
-<p>The simplest version of an autoencoder is one in which we train a network to reconstruct its input. In other words, we would like the network to somehow learn the identity function <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>f</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">f(x) = x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mclose">)</span><span class="mrel">=</span><span class="mord mathit">x</span></span></span></span></span>. For this problem not to be trivial, we impose the condition of the network to go through an intermediate layer whose dimensionality is much lower than the dimensionality of the input. With this bottleneck condition, the network has to compress the input information in a way that it understands and can reconstruct afterwards. The network is therefore divided in two pieces, the <em>encoder</em> receives the input and creates a <em>latent</em> or <em>hidden</em> representation of it, and the <em>decoder</em> takes this intermediate representation and tries to reconstruct the input. The loss of an autoencoder is called \emph{recosntruction loss}, and can be defined simply as the squared error between the input and generated samples:</p>
-<p><span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><mi>R</mi></msub><mo>(</mo><mi>x</mi><mo separator="true">,</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mo>=</mo><mi mathvariant="normal">∣</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>−</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mi mathvariant="normal">∣</mi><msup><mi mathvariant="normal">∣</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">L_R (x, x&#x27;) = ||x - x&#x27;||^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8141079999999999em;"></span><span class="strut bottom" style="height:1.064108em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mrel">=</span><span class="mord">∣</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mbin">−</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord">∣</span><span class="mord"><span class="mord">∣</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span></p>
-<p>\footnote{Another widely used reconstruction loss for the case when the input is normalized to be in the range [0,1]^N is the cross-entropy defined as</p>
-<p>Where <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span></span> is the input and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:0.751892em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span> the output.</p>
-<h5><a id="Variational_Autoencoders_VAE_16"></a>Variational Autoencoders (VAE)</h5>
-<p>Variational autoencoders (VAE) impose a second constraint on how to construct the hidden representation. Now the latent code has a prior distribution defined by design. This also works as a regularization on the amount of information that can be stored in the latent. The benefit of this relies on the fact that now can use the system as a generative model. To create a new sample that comes from the data distribution <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mclose">)</span></span></span></span></span>, we just have to sample from <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span> and run this sample through the <em>decoder</em> to <em>reconstruct</em> a new image. If this condition is not imposed, then the latent code can be distributed among the latent space freely and therefore is not possible to sample a new latent code to produce an image in a straightforward manner.</p>
-<p>In order to enforce this property a second term is added to the loss function in the form of a Kullback-Liebler (KL) divergence between the distribution created by the encoder and the prior distribution. Since VAE is based in a probabilistic interpretation, the reconstruction loss used is the cross-entropy loss. Putting this together we have,</p>
-<p><span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mo>=</mo><msub><mi>L</mi><mi>R</mi></msub><mo>(</mo><mi>x</mi><mo separator="true">,</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mo>+</mo><mi>K</mi><mi>L</mi><mo>(</mo><mi>q</mi><mo>(</mo><mi>z</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>)</mo><mi mathvariant="normal">∣</mi><mi mathvariant="normal">∣</mi><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo><mo>)</mo><mo>=</mo><mo>−</mo><msubsup><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></msubsup><msub><mi>x</mi><mi>k</mi></msub><mo>log</mo><mo>(</mo><msubsup><mi>x</mi><mi>k</mi><mrow><mi mathvariant="normal">′</mi></mrow></msubsup><mo>)</mo><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>x</mi><mi>k</mi></msub><mo>)</mo><mo>log</mo><mo>(</mo><mn>1</mn><mo>−</mo><msubsup><mi>x</mi><mi>k</mi><mrow><mi mathvariant="normal">′</mi></mrow></msubsup><mo>)</mo><mo>+</mo><mi>K</mi><mi>L</mi><mo>(</mo><mi>q</mi><mo>(</mo><mi>z</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>)</mo><mi mathvariant="normal">∣</mi><mi mathvariant="normal">∣</mi><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo><mo>)</mo></mrow><annotation encoding="application/x-tex">L(x, x&#x27;) = L_R(x, x&#x27;) + KL(q(z|x)||p(z)) = - \sum_{k=1}^N x_k \log(x&#x27;_k) + (1-x_k) \log(1-x&#x27;_k) + KL(q(z|x)|| p(z))</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8423309999999999em;"></span><span class="strut bottom" style="height:1.142341em;vertical-align:-0.30001em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mrel">=</span><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mbin">+</span><span class="mord mathit" style="margin-right:0.07153em;">K</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mclose">)</span><span class="mord">∣</span><span class="mord">∣</span><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mclose">)</span><span class="mrel">=</span><span class="mord">−</span><span class="mop"><span class="op-symbol small-op mop" style="top:-0.0000050000000000050004em;">∑</span><span class="vlist"><span style="top:0.30001em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span><span class="mrel">=</span><span class="mord">1</span></span></span></span><span style="top:-0.364em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">N</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:0.2831079999999999em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mbin">+</span><span class="mopen">(</span><span class="mord">1</span><span class="mbin">−</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mopen">(</span><span class="mord">1</span><span class="mbin">−</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:0.2831079999999999em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mbin">+</span><span class="mord mathit" style="margin-right:0.07153em;">K</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mclose">)</span><span class="mord">∣</span><span class="mord">∣</span><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
-<p>Where <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>q</mi><mo>(</mo><mi>z</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">q(z|x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mclose">)</span></span></span></span></span> is the encoder of our network and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span> is the prior distribution imposed on the latent code.<br>
-(vae reference <a href="https://jaan.io/what-is-variational-autoencoder-vae-tutorial">https://jaan.io/what-is-variational-autoencoder-vae-tutorial</a>)</p>
-<h2><a id="Adversarial_Autoencoders_25"></a>Adversarial Autoencoders</h2>
-<p>One of the main drawbacks of variational autoencoders is that, the KL divergence term does not have a closed form solution except for a handful of distributions. Furthermore it is not straightforward to use discrete distributions on for <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span>, one alternative for this is \ref{discrete variational autoencoders <a href="https://arxiv.org/abs/1609.02200">https://arxiv.org/abs/1609.02200</a>}.</p>
-<p>Adversarial autoencodesr (AAE) avoid using the KL divergence altogether by using adversarial learning. Instead, a new network is trained to discriminatively predict whether a sample comes from the hidden code of the autoencoder or from the distribution <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span> determined by the user. The loss of the encoder is now composed by the reconstruction loss plus the loss given by the discriminator network.</p>
-<p>The image shows schematically how AAEs work. The top row is equivalent to an VAE. First a sample <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span> is drawn according to the generator network <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>q</mi><mo>(</mo><mi>z</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">q(z|x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mclose">)</span></span></span></span></span>, that sample is then sent to the decoder which generates <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:0.751892em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span> from <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span>. The reconstruction loss is computed between <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span></span> and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:0.751892em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span> and the gradient is backpropagated through <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span></span></span></span></span> and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">q</span></span></span></span></span> accordingly and the weights of these to updated.</p>
-<p>On the adversarial regularization part the discriminator recieves <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span> distributed as <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>q</mi><mo>(</mo><mi>z</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">q(z|x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mord">∣</span><span class="mord mathit">x</span><span class="mclose">)</span></span></span></span></span> and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>z</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup></mrow><annotation encoding="application/x-tex">z&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:0.751892em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span> sampled from the true prior <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span> and assigns a probability to each of coming from <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>(</mo><mi>z</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">p(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit">p</span><span class="mopen">(</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span>. The loss incurred is backpropagated through the discriminator first to update its weights. Then the process is repeated and the generator (encoder) updates its parameters.</p>
-<p>We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution p(z). This modification allows us to use a broader set of distributions as priors for the latent code.</p>
-<p>Before getting into the training procedure used for this model, we look at some lines of how to implement what we have up to now in Pytorch. For the encoder, decoder and discriminator networks we will use simple feed forward neural networks with three 1000 hidden state layers with relu nonlinear functions and dropout.</p>
-<pre><code class="language-Python"><span class="hljs-comment">#Encoder</span>
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Q_net</span><span class="hljs-params">(nn.Module)</span>:</span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span>
+# AAE_pytorch
+
+Adversarial Autoencoders in Pytorch
+
+
+[intro]
+
+## Background
+##### Denoising Autoencoders (dAE)
+The simplest version of an autoencoder is one in which we train a network to reconstruct its input. In other words, we would like the network to somehow learn the identity function $$f(x) = x$$. For this problem not to be trivial, we impose the condition of the network to go through an intermediate layer whose dimensionality is much lower than the dimensionality of the input. With this bottleneck condition, the network has to compress the input information in a way that it understands and can reconstruct afterwards. The network is therefore divided in two pieces, the *encoder* receives the input and creates a *latent* or *hidden* representation of it, and the *decoder* takes this intermediate representation and tries to reconstruct the input. The loss of an autoencoder is called \emph{recosntruction loss}, and can be defined simply as the squared error between the input and generated samples:
+
+$$L_R (x, x') = ||x - x'||^2$$
+
+\footnote{Another widely used reconstruction loss for the case when the input is normalized to be in the range [0,1]^N is the cross-entropy defined as 
+
+Where $$x$$ is the input and $$x'$$ the output. 
+##### Variational Autoencoders (VAE)
+Variational autoencoders (VAE) impose a second constraint on how to construct the hidden representation. Now the latent code has a prior distribution defined by design. This also works as a regularization on the amount of information that can be stored in the latent. The benefit of this relies on the fact that now can use the system as a generative model. To create a new sample that comes from the data distribution $$p(x)$$, we just have to sample from $$p(z)$$ and run this sample through the *decoder* to *reconstruct* a new image. If this condition is not imposed, then the latent code can be distributed among the latent space freely and therefore is not possible to sample a new latent code to produce an image in a straightforward manner. 
+
+In order to enforce this property a second term is added to the loss function in the form of a Kullback-Liebler (KL) divergence between the distribution created by the encoder and the prior distribution. Since VAE is based in a probabilistic interpretation, the reconstruction loss used is the cross-entropy loss. Putting this together we have, 
+
+$$L(x, x') = L_R(x, x') + KL(q(z|x)||p(z)) = - \sum_{k=1}^N x_k \log(x'_k) + (1-x_k) \log(1-x'_k) + KL(q(z|x)|| p(z))$$
+
+Where $$q(z|x)$$ is the encoder of our network and $$p(z)$$ is the prior distribution imposed on the latent code. 
+(vae reference https://jaan.io/what-is-variational-autoencoder-vae-tutorial)
+## Adversarial Autoencoders
+One of the main drawbacks of variational autoencoders is that, the KL divergence term does not have a closed form solution except for a handful of distributions. Furthermore it is not straightforward to use discrete distributions on for $$z$$, one alternative for this is \ref{discrete variational autoencoders https://arxiv.org/abs/1609.02200}. 
+
+Adversarial autoencodesr (AAE) avoid using the KL divergence altogether by using adversarial learning. Instead, a new network is trained to discriminatively predict whether a sample comes from the hidden code of the autoencoder or from the distribution $$p(z)$$ determined by the user. The loss of the encoder is now composed by the reconstruction loss plus the loss given by the discriminator network.
+
+The image shows schematically how AAEs work. The top row is equivalent to an VAE. First a sample $$z$$ is drawn according to the generator network $$q(z|x)$$, that sample is then sent to the decoder which generates $$x'$$ from $$z$$. The reconstruction loss is computed between $$x$$ and $$x'$$ and the gradient is backpropagated through $$p$$ and $$q$$ accordingly and the weights of these to updated. 
+
+On the adversarial regularization part the discriminator recieves $$z$$ distributed as $$q(z|x)$$ and $$z'$$ sampled from the true prior $$p(z)$$ and assigns a probability to each of coming from $$p(z)$$. The loss incurred is backpropagated through the discriminator first to update its weights. Then the process is repeated and the generator (encoder) updates its parameters.
+
+We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution p(z). This modification allows us to use a broader set of distributions as priors for the latent code. 
+
+Before getting into the training procedure used for this model, we look at some lines of how to implement what we have up to now in Pytorch. For the encoder, decoder and discriminator networks we will use simple feed forward neural networks with three 1000 hidden state layers with relu nonlinear functions and dropout.
+
+``` Python
+#Encoder
+class Q_net(nn.Module):
+    def __init__(self):
         super(Q_net, self).__init__()
         self.lin1 = nn.Linear(X_dim, N)
         self.lin2 = nn.Linear(N, N)
         self.lin3gauss = nn.Linear(N, z_dim)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">forward</span><span class="hljs-params">(self, x)</span>:</span>
-        x = F.droppout(self.lin1(x), p=<span class="hljs-number">0.25</span>, training=self.training)
+    def forward(self, x):
+        x = F.droppout(self.lin1(x), p=0.25, training=self.training)
         x = F.relu(x)
-        x = F.droppout(self.lin2(x), p=<span class="hljs-number">0.25</span>, training=self.training)
+        x = F.droppout(self.lin2(x), p=0.25, training=self.training)
         x = F.relu(x)
         xgauss = self.lin3gauss(x)
-        <span class="hljs-keyword">return</span> xgauss
+        return xgauss
 
-<span class="hljs-comment"># Decoder</span>
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">P_net</span><span class="hljs-params">(nn.Module)</span>:</span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span>
+# Decoder
+class P_net(nn.Module):
+    def __init__(self):
         super(P_net, self).__init__()
         self.lin1 = nn.Linear(z_dim, N)
         self.lin2 = nn.Linear(N, N)
         self.lin3 = nn.Linear(N, X_dim)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">forward</span><span class="hljs-params">(self, x)</span>:</span>
+    def forward(self, x):
         x = self.lin1(x)
-        x = F.dropout(x, p=<span class="hljs-number">0.25</span>, training=self.training)
+        x = F.dropout(x, p=0.25, training=self.training)
         x = F.relu(x)
         x = self.lin2(x)
-        x = F.dropout(x, p=<span class="hljs-number">0.25</span>, training=self.training)
+        x = F.dropout(x, p=0.25, training=self.training)
         x = self.lin3(x)
-        <span class="hljs-keyword">return</span> F.sigmoid(x)
+        return F.sigmoid(x)
 
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">D_net_gauss</span><span class="hljs-params">(nn.Module)</span>:</span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span>
+class D_net_gauss(nn.Module):
+    def __init__(self):
         super(D_net_gauss, self).__init__()
         self.lin1 = nn.Linear(z_dim, N)
         self.lin2 = nn.Linear(N, N)
-        self.lin3 = nn.Linear(N, <span class="hljs-number">1</span>)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">forward</span><span class="hljs-params">(self, x)</span>:</span>
-        x = F.dropout(self.lin1(x), p=<span class="hljs-number">0.2</span>, training=self.training)
+        self.lin3 = nn.Linear(N, 1)
+    def forward(self, x):
+        x = F.dropout(self.lin1(x), p=0.2, training=self.training)
         x = F.relu(x)
-        x = F.dropout(self.lin2(x), p=<span class="hljs-number">0.2</span>, training=self.training)
+        x = F.dropout(self.lin2(x), p=0.2, training=self.training)
         x = F.relu(x)
-        <span class="hljs-keyword">return</span> F.sigmoid(self.lin3(x))
-</code></pre>
-<p>Some things to note from this definitions. Frist, since the output of the encoder has to follow a Gaussian distribution, we do not use any nonlinearities at its last output. Also, the output of the decoder has a sigmoid nonlinearity, this is because we are using the inputs normalized in a way in which their values are within <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord">0</span></span></span></span></span> and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord">1</span></span></span></span></span>. The output of the discriminator network is just one number between <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord">0</span></span></span></span></span> and <span class="math inline"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord">1</span></span></span></span></span> representing the probability of the input coming from the true prior distribution.</p>
-<p>Once the networks classes are defined, we create an instance of each one and define the optipmizers to be used. In order to have independence in the optimization procedure for the encoder (which is as well the generator of the adversarial network) we define two optimizers for this part of the network as follows:</p>
-<pre><code class="language-Python">    torch.manual_seed(<span class="hljs-number">10</span>)
-    Q, P = Q_net() = Q_net(), P_net(<span class="hljs-number">0</span>)     <span class="hljs-comment"># Encoder/Decoder</span>
-    D_gauss = D_net_gauss()     <span class="hljs-comment"># Discriminator adversarial</span>
-    <span class="hljs-keyword">if</span> torch.cuda.is_available():
+        return F.sigmoid(self.lin3(x))
+```
+
+Some things to note from this definitions. Frist, since the output of the encoder has to follow a Gaussian distribution, we do not use any nonlinearities at its last output. Also, the output of the decoder has a sigmoid nonlinearity, this is because we are using the inputs normalized in a way in which their values are within $$0$$ and $$1$$. The output of the discriminator network is just one number between $$0$$ and $$1$$ representing the probability of the input coming from the true prior distribution. 
+
+Once the networks classes are defined, we create an instance of each one and define the optipmizers to be used. In order to have independence in the optimization procedure for the encoder (which is as well the generator of the adversarial network) we define two optimizers for this part of the network as follows:
+
+``` Python
+    torch.manual_seed(10)
+    Q, P = Q_net() = Q_net(), P_net(0)     # Encoder/Decoder
+    D_gauss = D_net_gauss()     # Discriminator adversarial
+    if torch.cuda.is_available():
         Q = Q.cuda()
         P = P.cuda()
         D_cat = D_gauss.cuda()
         D_gauss = D_net_gauss().cuda()
     
-    <span class="hljs-comment"># Set learning rates</span>
-    gen_lr, reg_lr = <span class="hljs-number">0.0006</span>, <span class="hljs-number">0.0008</span>
+    # Set learning rates
+    gen_lr, reg_lr = 0.0006, 0.0008
     
-    <span class="hljs-comment"># Set optimizators</span>
+    # Set optimizators
     P_decoder = optim.Adam(P.parameters(), lr=gen_lr)
     Q_encoder = optim.Adam(Q.parameters(), lr=gen_lr)
     Q_generator = optim.Adam(Q.parameters(), lr=reg_lr)
     D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr)
-</code></pre>
-<p>The training procedure for this architecture for each minibatch is performed as follows:</p>
-<ol>
-<li>Do a forward path through the encoder/decoder part, compute and update the parameteres of the encoder Q and decoder P networks.</li>
-</ol>
-<pre><code class="language-Python">    z_sample = Q(X)
+```
+
+The training procedure for this architecture for each minibatch is performed as follows:
+1. Do a forward path through the encoder/decoder part, compute and update the parameteres of the encoder Q and decoder P networks. 
+``` Python
+    z_sample = Q(X)
     X_sample = P(z_sample)
     recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
     recon_loss.backward()
     P_decoder.step()
     Q_encoder.step()
-</code></pre>
-<ol start="2">
-<li>Create a latent representation z = Q(x) and a sample z’ from the prior p(z), run each one through the discriminator and compute the score assigned to each (D(z) and D(z’)).</li>
-</ol>
-<pre><code class="language-Python">    Q.eval()    
+```
+2. Create a latent representation z = Q(x) and a sample z’ from the prior p(z), run each one through the discriminator and compute the score assigned to each (D(z) and D(z’)). 
+``` Python
+    Q.eval()    
     z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
-    <span class="hljs-keyword">if</span> torch.cuda.is_available():
+    if torch.cuda.is_available():
         z_real_gauss = z_real_gauss.cuda()
     z_fake_gauss = Q(X)
 
     D_real_gauss, D_fake_gauss = D_gauss(z_real_gauss), D_gauss(z_fake_gauss)
-    D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(<span class="hljs-number">1</span> - D_fake_gauss + TINY))
+    D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
     D_loss.backward()
     D_gauss_solver.step()
-</code></pre>
-<ol start="3">
-<li>Compute the loss in the discriminator as <span class="math inline">ParseError: KaTeX parse error: Unexpected character: '’' at position 8: L_D(z, z̲’) = - \frac{1</span> and backpropagate it through the discriminator network to update its weights. The scalar $m$ corresponds to the minibatch size. In code,</li>
-</ol>
-<pre><code class="language-Python">        Q.eval()    <span class="hljs-comment"># Not use dropout in Q in this step</span>
+```
+3. Compute the loss in the discriminator as $$L_D(z, z’) = - \frac{1}{m} \sum_k \log(D(z’)) +  \log(1-D(z))$$ and backpropagate it through the discriminator network to update its weights. The scalar $m$ corresponds to the minibatch size. In code, 
+``` Python
+        Q.eval()    # Not use dropout in Q in this step
         z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
 
-        <span class="hljs-keyword">if</span> cuda:
+        if cuda:
             z_real_gauss = z_real_gauss.cuda()
 
         z_fake_gauss = Q(X)
 
         D_real_gauss = D_gauss(z_real_gauss)
         D_fake_gauss = D_gauss(z_fake_gauss)
-        D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(<span class="hljs-number">1</span> - D_fake_gauss + TINY))
+        D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
 
         D_loss.backward()
         D_gauss_solver.step()
@@ -132,19 +149,17 @@
         P.zero_grad()
         Q.zero_grad()
         D_gauss.zero_grad()
-</code></pre>
-<ol start="4">
-<li>Compute the loss of the generator network as $L_G(z) = -\frac{1}{m} \sum_k \log D(z)$ and update Q network accordingly.</li>
-</ol>
-<pre><code class="language-Python">        <span class="hljs-comment"># Generator</span>
-        Q.train()   <span class="hljs-comment"># Back to use dropout</span>
+```
+4. Compute the loss of the generator network as $L_G(z) = -\frac{1}{m} \sum_k \log D(z)$ and update Q network accordingly.
+``` Python
+        # Generator
+        Q.train()   # Back to use dropout
         z_fake_gauss = Q(X)
         D_fake_gauss = D_gauss(z_fake_gauss)
 
         G_loss = -torch.mean(torch.log(D_fake_gauss + TINY))
         G_loss.backward()
         Q_generator.step()
-</code></pre>
+```
 
-</body></html>
-</dl>
+
