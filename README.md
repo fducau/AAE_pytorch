@@ -51,7 +51,8 @@ class Q_net(nn.Module):
         x = F.relu(x)
         xgauss = self.lin3gauss(x)
         return xgauss
-
+```
+``` Python
 # Decoder
 class P_net(nn.Module):
     def __init__(self):
@@ -67,7 +68,8 @@ class P_net(nn.Module):
         x = F.dropout(x, p=0.25, training=self.training)
         x = self.lin3(x)
         return F.sigmoid(x)
-
+```
+``` Python
 class D_net_gauss(nn.Module):
     def __init__(self):
         super(D_net_gauss, self).__init__()
@@ -95,10 +97,8 @@ Once the networks classes are defined, we create an instance of each one and def
         P = P.cuda()
         D_cat = D_gauss.cuda()
         D_gauss = D_net_gauss().cuda()
-    
     # Set learning rates
     gen_lr, reg_lr = 0.0006, 0.0008
-    
     # Set optimizators
     P_decoder = optim.Adam(P.parameters(), lr=gen_lr)
     Q_encoder = optim.Adam(Q.parameters(), lr=gen_lr)
@@ -123,32 +123,25 @@ The training procedure for this architecture for each minibatch is performed as 
     if torch.cuda.is_available():
         z_real_gauss = z_real_gauss.cuda()
     z_fake_gauss = Q(X)
-
+    # Compute discriminator outputs and loss
     D_real_gauss, D_fake_gauss = D_gauss(z_real_gauss), D_gauss(z_fake_gauss)
     D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
-    D_loss.backward()
-    D_gauss_solver.step()
+    D_loss.backward()       # Backpropagate loss
+    D_gauss_solver.step()   # Apply optimization step[
 ```
 3. Compute the loss in the discriminator as $$L_D(z, z’) = - \frac{1}{m} \sum_k \log(D(z’)) +  \log(1-D(z))$$ and backpropagate it through the discriminator network to update its weights. The scalar $m$ corresponds to the minibatch size. In code, 
 ``` Python
-        Q.eval()    # Not use dropout in Q in this step
-        z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
+    Q.eval()    # Not use dropout in Q in this step
+    z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
+    if cuda:
+        z_real_gauss = z_real_gauss.cuda()
+    z_fake_gauss = Q(X)
 
-        if cuda:
-            z_real_gauss = z_real_gauss.cuda()
-
-        z_fake_gauss = Q(X)
-
-        D_real_gauss = D_gauss(z_real_gauss)
-        D_fake_gauss = D_gauss(z_fake_gauss)
-        D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
-
-        D_loss.backward()
-        D_gauss_solver.step()
-
-        P.zero_grad()
-        Q.zero_grad()
-        D_gauss.zero_grad()
+    D_real_gauss = D_gauss(z_real_gauss)
+    D_fake_gauss = D_gauss(z_fake_gauss)
+    D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
+    D_loss.backward()
+    D_gauss_solver.step()
 ```
 4. Compute the loss of the generator network as $L_G(z) = -\frac{1}{m} \sum_k \log D(z)$ and update Q network accordingly.
 ``` Python
