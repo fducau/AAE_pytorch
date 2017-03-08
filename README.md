@@ -9,7 +9,7 @@ Adversarial Autoencoders in Pytorch
 ##### Denoising Autoencoders (dAE)
 The simplest version of an autoencoder is one in which we train a network to reconstruct its input. In other words, we would like the network to somehow learn the identity function $$f(x) = x$$. For this problem not to be trivial, we impose the condition of the network to go through an intermediate layer whose dimensionality is much lower than the dimensionality of the input. With this bottleneck condition, the network has to compress the input information in a way that it understands and can reconstruct afterwards. The network is therefore divided in two pieces, the *encoder* receives the input and creates a *latent* or *hidden* representation of it, and the *decoder* takes this intermediate representation and tries to reconstruct the input. The loss of an autoencoder is called \emph{recosntruction loss}, and can be defined simply as the squared error between the input and generated samples:
 
-$$L_R (x, x') = ||x - x'||^2$$
+$L_R (x, x') = ||x - x'||^2$
 
 \footnote{Another widely used reconstruction loss for the case when the input is normalized to be in the range [0,1]^N is the cross-entropy defined as 
 
