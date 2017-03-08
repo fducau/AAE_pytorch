@@ -29,7 +29,7 @@ One of the main drawbacks of variational autoencoders is that, the KL divergence
 Adversarial autoencodesr (AAE) avoid using the KL divergence altogether by using adversarial learning. Instead, a new network is trained to discriminatively predict whether a sample comes from the hidden code of the autoencoder or from the distribution $$p(z)$$ determined by the user. The loss of the encoder is now composed by the reconstruction loss plus the loss given by the discriminator network.
 
 The image shows schematically how AAEs work. The top row is equivalent to an VAE. First a sample $$z$$ is drawn according to the generator network $$q(z|x)$$, that sample is then sent to the decoder which generates $$x'$$ from $$z$$. The reconstruction loss is computed between $$x$$ and $$x'$$ and the gradient is backpropagated through $$p$$ and $$q$$ accordingly and the weights of these to updated. 
-
+![a](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_001.png)
 On the adversarial regularization part the discriminator recieves $$z$$ distributed as $$q(z|x)$$ and $$z'$$ sampled from the true prior $$p(z)$$ and assigns a probability to each of coming from $$p(z)$$. The loss incurred is backpropagated through the discriminator first to update its weights. Then the process is repeated and the generator (encoder) updates its parameters.
 
 We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution p(z). This modification allows us to use a broader set of distributions as priors for the latent code. 
