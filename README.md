@@ -1,12 +1,9 @@
-# AAE_pytorch
-
-Adversarial Autoencoders in Pytorch
-
+# Adversarial Autoencoders (with Pytorch)
 
 [intro]
 
 ## Background
-##### Denoising Autoencoders (dAE)
+#### Denoising Autoencoders (dAE)
 The simplest version of an autoencoder is one in which we train a network to reconstruct its input. In other words, we would like the network to somehow learn the identity function $$f(x) = x$$. For this problem not to be trivial, we impose the condition of the network to go through an intermediate layer whose dimensionality is much lower than the dimensionality of the input. With this bottleneck condition, the network has to compress the input information in a way that it understands and can reconstruct afterwards. The network is therefore divided in two pieces, the *encoder* receives the input and creates a *latent* or *hidden* representation of it, and the *decoder* takes this intermediate representation and tries to reconstruct the input. The loss of an autoencoder is called \emph{recosntruction loss}, and can be defined simply as the squared error between the input and generated samples:
 
 $$L_R (x, x') = ||x - x'||^2$$
@@ -14,7 +11,7 @@ $$L_R (x, x') = ||x - x'||^2$$
 \footnote{Another widely used reconstruction loss for the case when the input is normalized to be in the range [0,1]^N is the cross-entropy defined as 
 
 Where $$x$$ is the input and $$x'$$ the output. 
-##### Variational Autoencoders (VAE)
+#### Variational Autoencoders (VAE)
 Variational autoencoders (VAE) impose a second constraint on how to construct the hidden representation. Now the latent code has a prior distribution defined by design. This also works as a regularization on the amount of information that can be stored in the latent. The benefit of this relies on the fact that now can use the system as a generative model. To create a new sample that comes from the data distribution $$p(x)$$, we just have to sample from $$p(z)$$ and run this sample through the *decoder* to *reconstruct* a new image. If this condition is not imposed, then the latent code can be distributed among the latent space freely and therefore is not possible to sample a new latent code to produce an image in a straightforward manner. 
 
 In order to enforce this property a second term is added to the loss function in the form of a Kullback-Liebler (KL) divergence between the distribution created by the encoder and the prior distribution. Since VAE is based in a probabilistic interpretation, the reconstruction loss used is the cross-entropy loss. Putting this together we have, 
@@ -35,6 +32,7 @@ On the adversarial regularization part the discriminator recieves $$z$$ distribu
 
 We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution p(z). This modification allows us to use a broader set of distributions as priors for the latent code. 
 
+##### Network definition
 Before getting into the training procedure used for this model, we look at some lines of how to implement what we have up to now in Pytorch. For the encoder, decoder and discriminator networks we will use simple feed forward neural networks with three 1000 hidden state layers with relu nonlinear functions and dropout.
 
 ``` Python
@@ -106,7 +104,7 @@ Once the networks classes are defined, we create an instance of each one and def
     Q_generator = optim.Adam(Q.parameters(), lr=reg_lr)
     D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr)
 ```
-
+##### Training procedure
 The training procedure for this architecture for each minibatch is performed as follows:
 1. Do a forward path through the encoder/decoder part, compute and update the parameteres of the encoder Q and decoder P networks. 
 ``` Python
@@ -155,6 +153,9 @@ The training procedure for this architecture for each minibatch is performed as 
         G_loss.backward()
         Q_generator.step()
 ```
+
+##### Generating images
+
 
 
 
