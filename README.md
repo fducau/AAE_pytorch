@@ -162,29 +162,19 @@ Now we attempt to visualize at how the AAE encodes images into a 2-D Gaussian la
 
 #### AAE to learn disentangled representations
 ##### Supervised approach
-In this step we go one step forward and try to impose certain structure in the latent code $$z$$. Particularly we want the architecture to be able to separate the class information from the trace style. To do so, we extend the previous architecture to the one in the figure below. We split the latent dimension in two parts: the first one $$z$$ is analogous as the one we had in the previous example; the second part of the hidden code is now a one hot vector $$y$$ indicating the identity of the number being fed to the autoencoder making use of labeled information. In this setting, the decoder uses the one-hot vector $$y$$ and the hidden code $$z$$ to reconstruct the original image. The encoder is left with the task of encoding the style information in $$z$$.
-
-In this setting we expect the encoder to just encode the trace information into a continuous Gaussian distribution since the decoder already has the number information being provided from $$y$$. 
-
-In this section, we first focus on the fully supervised scenarios and discuss an architecture of
-adversarial autoencoders that can separate the class label information from the image style information.
-We then extend this architecture to the semi-supervised settings in Section 5.
-In order to incorporate the label information, we alter the network architecture of Figure 1 to provide
-a one-hot vector encoding of the label to the decoder (Figure 6). The decoder utilizes both the one-hot
-vector identifying the label and the hidden code z to reconstruct the image. This architecture forces
-the network to retain all information independent of the label in the hidden code z.
-Figure 7a demonstrates the results of such a network trained on MNIST digits in which the hidden
-code is forced into a 15-D Gaussian. Each row of Figure 7a presents reconstructed images in which
-the hidden code z is fixed to a particular value but the label is systematically explored. Note that the
-style of the reconstructed images is consistent across a given row. Figure 7b demonstrates the same
-experiment applied to Street View House Numbers dataset [Netzer et al., 2011]. A video showing the
-learnt SVHN style manifold can be found at http://www.comm.utoronto.ca/~makhzani/adv_
-
+In this step we go one step forward and try to impose certain structure in the latent code $$z$$. Particularly we want the architecture to be able to separate the class information from the trace style in a fully supervised scenario. To do so, we extend the previous architecture to the one in the figure below. We split the latent dimension in two parts: the first one $$z$$ is analogous as the one we had in the previous example; the second part of the hidden code is now a one hot vector $$y$$ indicating the identity of the number being fed to the autoencoder making use of labeled information. 
 
 ![aae_semi](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_super.png)
 
-##### Semi-supervised approach
+In this setting, the decoder uses the one-hot vector $$y$$ and the hidden code $$z$$ to reconstruct the original image. The encoder is left with the task of encoding the style information in $$z$$. In the image below we can see the result of training this architecture with 10,000 labeled MNIST samples, $$z$$ . The figure shows the reconstructed images in which, for each row, the hidden code $$z$$ is kept fixed to a particular value and the class label $$y$$ is changed from 0 to 9. Effectively the style is maintained across the columns. 
 
-![aae002](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_002.png)
+![disentanglement1](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/disentanglement1.png)
+
+##### Semi-supervised approach
+As our last experiment we look an alternative to obtain similar disentanglement results for the case in which we have only few samples of labeled information. We can modify the previous architecture so that the AAE produces a latent code composed by the concatenation of a vector $$y$$ indicating the class or label (using a Softmax) and a continuous latent variable $$z$$ (Using a linear layer). Since we want the vector $$y$$ to behave as a one-hot vector, we impose it to follow a Categorical distribution by using a second adversarial network with discriminator $$D_{cat}$$. The encoder now is $q(z, y|x)$. The decoder then uses both the class label and the continuous hidden code to reconstruct the image. 
+
+![aae002](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_semi.png)
+
+The unlabeled data contributes to the training procedure by improving the way the enconder creates the hidden code based on the reconstruction loss and improving the generator and discriminator networks for which no labeled information is needed. 
 
 ![disen](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/disentanglement.png)
