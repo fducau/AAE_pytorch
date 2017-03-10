@@ -178,3 +178,5 @@ As our last experiment we look an alternative to obtain similar disentanglement 
 The unlabeled data contributes to the training procedure by improving the way the enconder creates the hidden code based on the reconstruction loss and improving the generator and discriminator networks for which no labeled information is needed. 
 
 ![disen](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/disentanglement.png)
+
+It is worth noticing that now, not only we can generate images with fewer labeled information, but also we can classify the images for which we do not have labels by looking at the latent code $$y$$ and picking the one with highest value. With the current setting the classification loss is about 3% using 100 labeled samples and 47,000 unlabeled ones. 
