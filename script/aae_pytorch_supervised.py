@@ -58,6 +58,7 @@ def load_data(data_path='../data/'):
 
     return train_labeled_loader, train_unlabeled_loader, valid_loader
 
+
 ##################################
 # Define Networks
 ##################################
@@ -84,7 +85,7 @@ class Q_net(nn.Module):
 class P_net(nn.Module):
     def __init__(self):
         super(P_net, self).__init__()
-        self.lin1 = nn.Linear(z_dim, N)
+        self.lin1 = nn.Linear(z_dim + n_classes, N)
         self.lin2 = nn.Linear(N, N)
         self.lin3 = nn.Linear(N, X_dim)
 
@@ -158,6 +159,12 @@ def create_latent(Q, loader):
     return z_values, labels
 
 
+def get_categorical(labels, n_classes=10):
+    cat = np.array(labels.data.tolist())
+    cat = np.eye(n_classes)[cat].astype('float32')
+    cat = torch.from_numpy(cat)
+    return Variable(cat)
+
 ####################
 # Train procedure
 ####################
@@ -191,7 +198,13 @@ def train(P, Q, D_gauss, P_decoder, Q_encoder, Q_generator, D_gauss_solver, data
         #######################
         # Reconstruction phase
         #######################
-        z_sample = Q(X)
+        z_gauss = Q(X)
+        z_cat = get_categorical(target, n_classes=10)
+        if cuda:
+            z_cat = z_cat.cuda()
+
+        z_sample = torch.cat((z_cat, z_gauss), 1)
+
         X_sample = P(z_sample)
         recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
 
@@ -271,7 +284,7 @@ def generate_model(savefolder='./'):
         D_loss_gauss, G_loss, recon_loss = train(P, Q, D_gauss, P_decoder,Q_encoder, 
                                                  Q_generator,
                                                  D_gauss_solver,
-                                                 train_unlabeled_loader)
+                                                 valid_loader)
         if epoch % 10 == 0:
             report_loss(epoch, D_loss_gauss, G_loss, recon_loss)
 
