@@ -27,7 +27,7 @@ One of the main drawbacks of variational autoencoders is that, the KL divergence
 Adversarial autoencodesr (AAE) avoid using the KL divergence altogether by using adversarial learning. Instead, a new network is trained to discriminatively predict whether a sample comes from the hidden code of the autoencoder or from the distribution $$p(z)$$ determined by the user. The loss of the encoder is now composed by the reconstruction loss plus the loss given by the discriminator network.
 
 The image shows schematically how AAEs work. The top row is equivalent to an VAE. First a sample $$z$$ is drawn according to the generator network $$q(z|x)$$, that sample is then sent to the decoder which generates $$x'$$ from $$z$$. The reconstruction loss is computed between $$x$$ and $$x'$$ and the gradient is backpropagated through $$p$$ and $$q$$ accordingly and the weights of these to updated. 
-![a](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_001.png)
+![aae001](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_001.png)
 On the adversarial regularization part the discriminator recieves $$z$$ distributed as $$q(z|x)$$ and $$z'$$ sampled from the true prior $$p(z)$$ and assigns a probability to each of coming from $$p(z)$$. The loss incurred is backpropagated through the discriminator first to update its weights. Then the process is repeated and the generator (encoder) updates its parameters.
 
 We can now use the loss incurred by the the generator of the adversarial network (which is the encoder of the autoencoder) instead of a KL divergence for it to learn how to produce samples according to the distribution $$p(z)$$. This modification allows us to use a broader set of distributions as priors for the latent code. 
@@ -155,12 +155,36 @@ The training procedure for this architecture for each minibatch is performed as 
 ```
 
 ##### Generating images
-Now we attempt to look at how the AAE encodes images a 2D Gaussian latent representation with standard deviation 10. For this we first train the model and then use the generator part with an input going from -10 to 10 for each of the latent dimensions. 
-
-
+Now we attempt to visualize at how the AAE encodes images into a 2-D Gaussian latent representation with standard deviation 5. For this we first train the model and then use the generator part with a code $$z$$ generated uniformely from the 2-D gaussian distribution. 
+![rec](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/z_dim_reconstruction.png)
 
 
 
 #### AAE to learn disentangled representations
+##### Supervised approach
+In this step we go one step forward and try to impose certain structure in the latent code $$z$$. Particularly we want the architecture to be able to separate the class information from the trace style. To do so, we extend the previous architecture to the one in the figure below. We split the latent dimension in two parts: the first one $$z$$ is analogous as the one we had in the previous example; the second part of the hidden code is now a one hot vector $$y$$ indicating the identity of the number being fed to the autoencoder making use of labeled information. In this setting, the decoder uses the one-hot vector $$y$$ and the hidden code $$z$$ to reconstruct the original image. The encoder is left with the task of encoding the style information in $$z$$.
+
+In this setting we expect the encoder to just encode the trace information into a continuous Gaussian distribution since the decoder already has the number information being provided from $$y$$. 
+
+In this section, we first focus on the fully supervised scenarios and discuss an architecture of
+adversarial autoencoders that can separate the class label information from the image style information.
+We then extend this architecture to the semi-supervised settings in Section 5.
+In order to incorporate the label information, we alter the network architecture of Figure 1 to provide
+a one-hot vector encoding of the label to the decoder (Figure 6). The decoder utilizes both the one-hot
+vector identifying the label and the hidden code z to reconstruct the image. This architecture forces
+the network to retain all information independent of the label in the hidden code z.
+Figure 7a demonstrates the results of such a network trained on MNIST digits in which the hidden
+code is forced into a 15-D Gaussian. Each row of Figure 7a presents reconstructed images in which
+the hidden code z is fixed to a particular value but the label is systematically explored. Note that the
+style of the reconstructed images is consistent across a given row. Figure 7b demonstrates the same
+experiment applied to Street View House Numbers dataset [Netzer et al., 2011]. A video showing the
+learnt SVHN style manifold can be found at http://www.comm.utoronto.ca/~makhzani/adv_
 
 
+![aae_semi](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_super.png)
+
+##### Semi-supervised approach
+
+![aae002](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/aae_002.png)
+
+![disen](https://raw.githubusercontent.com/fducau/AAE_pytorch/master/img/disentanglement.png)
