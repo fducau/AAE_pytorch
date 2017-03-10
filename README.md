@@ -118,16 +118,16 @@ Once the networks classes are defined, we create an instance of each one and def
 ##### Training procedure
 The training procedure for this architecture for each minibatch is performed as follows:
 1. Do a forward path through the encoder/decoder part, compute and update the parameteres of the encoder Q and decoder P networks. 
-    ``` Python
+``` Python
     z_sample = Q(X)
     X_sample = P(z_sample)
     recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
     recon_loss.backward()
     P_decoder.step()
     Q_encoder.step()
-    ```
+
 2. Create a latent representation z = Q(x) and a sample z’ from the prior p(z), run each one through the discriminator and compute the score assigned to each (D(z) and D(z’)). 
-    ``` Python
+``` Python
     Q.eval()    
     z_real_gauss = Variable(torch.randn(train_batch_size, z_dim) * 5)   # Sample from N(0,5)
     if torch.cuda.is_available():
@@ -138,9 +138,9 @@ The training procedure for this architecture for each minibatch is performed as 
     D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
     D_loss.backward()       # Backpropagate loss
     D_gauss_solver.step()   # Apply optimization step[
-    ```
+```
 3. Compute the loss in the discriminator as and backpropagate it through the discriminator network to update its weights. In code, 
-···``` Python
+``` Python
     Q.eval()    # Not use dropout in Q in this step
     z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
     if cuda:
@@ -152,9 +152,9 @@ The training procedure for this architecture for each minibatch is performed as 
     D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
     D_loss.backward()
     D_gauss_solver.step()
-···```
+```
 4. Compute the loss of the generator network and update Q network accordingly.
-    ``` Python
+``` Python
         # Generator
         Q.train()   # Back to use dropout
         z_fake_gauss = Q(X)
@@ -163,7 +163,7 @@ The training procedure for this architecture for each minibatch is performed as 
         G_loss = -torch.mean(torch.log(D_fake_gauss + TINY))
         G_loss.backward()
         Q_generator.step()
-    ```
+```
 
 ##### Generating images
 Now we attempt to visualize at how the AAE encodes images into a 2-D Gaussian latent representation with standard deviation 5. For this we first train the model and then use the generator part with a code $$z$$ generated uniformely from the 2-D gaussian distribution. 
