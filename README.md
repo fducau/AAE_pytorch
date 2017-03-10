@@ -140,7 +140,7 @@ The training procedure for this architecture for each minibatch is performed as 
     D_gauss_solver.step()   # Apply optimization step[
     ```
 3. Compute the loss in the discriminator as and backpropagate it through the discriminator network to update its weights. In code, 
-    ``` Python
+...``` Python
     Q.eval()    # Not use dropout in Q in this step
     z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
     if cuda:
@@ -152,7 +152,7 @@ The training procedure for this architecture for each minibatch is performed as 
     D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
     D_loss.backward()
     D_gauss_solver.step()
-    ```
+...```
 4. Compute the loss of the generator network and update Q network accordingly.
     ``` Python
         # Generator
