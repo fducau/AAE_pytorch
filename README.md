@@ -192,6 +192,6 @@ It is worth noticing that now, not only we can generate images with fewer labele
 
 #### Recommended related reading
 
--[What is a variational autoencoder - Tutorial](https://jaan.io/what-is-variational-autoencoder-vae-tutorial)
--[Auto-encoding Variational Bayes (original paper)](https://arxiv.org/abs/1312.6114)
--[Adversarial Autoencoders (original paper)](https://arxiv.org/abs/1511.05644)
+-  [What is a variational autoencoder - Tutorial](https://jaan.io/what-is-variational-autoencoder-vae-tutorial)
+- [Auto-encoding Variational Bayes (original paper)](https://arxiv.org/abs/1312.6114)
+- [Adversarial Autoencoders (original paper)](https://arxiv.org/abs/1511.05644)
