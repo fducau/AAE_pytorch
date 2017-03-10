@@ -125,7 +125,7 @@ The training procedure for this architecture for each minibatch is performed as 
     recon_loss.backward()
     P_decoder.step()
     Q_encoder.step()
-
+``` 
 2. Create a latent representation z = Q(x) and a sample z’ from the prior p(z), run each one through the discriminator and compute the score assigned to each (D(z) and D(z’)). 
 ``` Python
     Q.eval()    
