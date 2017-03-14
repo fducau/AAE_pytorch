@@ -1,15 +1,11 @@
 import argparse
-import time
 import torch
 import pickle
 import numpy as np
-import itertools
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as autograd
 import torch.optim as optim
-from torch.nn.modules.upsampling import UpsamplingNearest2d
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch semi-supervised MNIST')
@@ -34,6 +30,7 @@ train_batch_size = args.batch_size
 valid_batch_size = args.batch_size
 N = 1000
 epochs = args.epochs
+
 
 ##################################
 # Load data and create Data loaders
@@ -97,6 +94,7 @@ class P_net(nn.Module):
         x = F.dropout(x, p=0.2, training=self.training)
         x = self.lin3(x)
         return F.sigmoid(x)
+
 
 class D_net_gauss(nn.Module):
     def __init__(self):
@@ -259,7 +257,6 @@ def train(P, Q, D_gauss, P_decoder, Q_encoder, Q_generator, D_gauss_solver, data
 
 
 def generate_model():
-    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
     torch.manual_seed(10)
 
     if cuda:
@@ -292,4 +289,5 @@ def generate_model():
 
 
 if __name__ == '__main__':
-    generate_model()
+    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
+    Q, P = generate_model(train_labeled_loader, train_unlabeled_loader, valid_loader)

@@ -1,15 +1,11 @@
 import argparse
-import time
 import torch
 import pickle
 import numpy as np
-import itertools
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as autograd
 import torch.optim as optim
-from torch.nn.modules.upsampling import UpsamplingNearest2d
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch semi-supervised MNIST')
@@ -35,6 +31,7 @@ valid_batch_size = args.batch_size
 N = 1000
 epochs = args.epochs
 
+
 ##################################
 # Load data and create Data loaders
 ##################################
@@ -57,6 +54,7 @@ def load_data(data_path='../data/'):
     valid_loader = torch.utils.data.DataLoader(validset, batch_size=valid_batch_size, shuffle=True)
 
     return train_labeled_loader, train_unlabeled_loader, valid_loader
+
 
 ##################################
 # Define Networks
@@ -97,6 +95,7 @@ class P_net(nn.Module):
         x = self.lin3(x)
         return F.sigmoid(x)
 
+
 class D_net_gauss(nn.Module):
     def __init__(self):
         super(D_net_gauss, self).__init__()
@@ -120,6 +119,7 @@ def save_model(model, filename):
     print('Best model so far, saving it...')
     torch.save(model.state_dict(), filename)
 
+
 def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
     '''
     Print loss
@@ -128,6 +128,7 @@ def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
                                                                                    D_loss_gauss.data[0],
                                                                                    G_loss.data[0],
                                                                                    recon_loss.data[0]))
+
 
 def create_latent(Q, loader):
     '''
@@ -243,8 +244,7 @@ def train(P, Q, D_gauss, P_decoder, Q_encoder, Q_generator, D_gauss_solver, data
     return D_loss, G_loss, recon_loss
 
 
-def generate_model(savefolder='./'):
-    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
+def generate_model(train_labeled_loader, train_unlabeled_loader, valid_loader):
     torch.manual_seed(10)
 
     if cuda:
@@ -268,18 +268,15 @@ def generate_model(savefolder='./'):
     D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr)
 
     for epoch in range(epochs):
-        D_loss_gauss, G_loss, recon_loss = train(P, Q, D_gauss, P_decoder,Q_encoder, 
+        D_loss_gauss, G_loss, recon_loss = train(P, Q, D_gauss, P_decoder, Q_encoder,
                                                  Q_generator,
                                                  D_gauss_solver,
                                                  train_unlabeled_loader)
         if epoch % 10 == 0:
             report_loss(epoch, D_loss_gauss, G_loss, recon_loss)
 
-    torch.save(Q.state_dict(), savefolder + 'Q_simple')
-    torch.save(P.state_dict(), savefolder + 'P_simple')
-    torch.save(D_gauss.state_dict(), savefolder + 'D_gauss_simple')
-
+    return Q, P
 
 if __name__ == '__main__':
-    generate_model()
-
+    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
+    Q, P = generate_model(train_labeled_loader, train_unlabeled_loader, valid_loader)

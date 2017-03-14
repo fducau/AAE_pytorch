@@ -4,12 +4,11 @@ import torch
 import pickle
 import numpy as np
 import itertools
+from viz import *
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as autograd
 import torch.optim as optim
-from torch.nn.modules.upsampling import UpsamplingNearest2d
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch semi-supervised MNIST')
@@ -27,13 +26,19 @@ seed = 10
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 n_classes = 10
-z_dim = 10
+z_dim = 2
 X_dim = 784
 y_dim = 10
 train_batch_size = args.batch_size
 valid_batch_size = args.batch_size
 N = 1000
 epochs = args.epochs
+
+params = {'n_classes': n_classes, 'z_dim': z_dim, 'X_dim': X_dim,
+          'y_dim': y_dim, 'train_batch_size': train_batch_size,
+          'valid_batch_size': valid_batch_size, 'N': N, 'epochs': epochs,
+          'cuda': cuda}
+
 
 ##################################
 # Load data and create Data loaders
@@ -350,8 +355,8 @@ def train(P, Q, D_cat, D_gauss, P_decoder, Q_encoder, Q_semi_supervised, Q_gener
 
     return D_loss_cat, D_loss_gauss, G_loss, recon_loss, class_loss
 
-def generate_model():
-    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
+
+def generate_model(train_labeled_loader, train_unlabeled_loader, valid_loader):
     torch.manual_seed(10)
 
     if cuda:
@@ -369,7 +374,6 @@ def generate_model():
     gen_lr = 0.0006
     semi_lr = 0.001
     reg_lr = 0.0008
-
 
     # Set optimizators
     P_decoder = optim.Adam(P.parameters(), lr=gen_lr)
@@ -400,5 +404,9 @@ def generate_model():
     end = time.time()
     print('Training time: {} seconds'.format(end - start))
 
+    return Q, P
+
+
 if __name__ == '__main__':
-    generate_model()
+    train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
+    Q, P = generate_model(train_labeled_loader, train_unlabeled_loader, valid_loader)
