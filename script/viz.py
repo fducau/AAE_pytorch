@@ -2,7 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
-def get_X_batch(data_loader, convolutional, size=None):
+def get_X_batch(data_loader, convolutional=False, size=None):
     if size is None:
         size = data_loader.batch_size
     for X, target in data_loader:
@@ -40,11 +40,11 @@ def create_reconstruction(Q, P, data_loader, convolutional):
     plt.imshow(img_rec)
 
 
-def grid_plot(Q, P, data_loader, convolutional):
+def grid_plot(Q, P, data_loader):
     Q.eval()
     P.eval()
     X = get_X_batch(data_loader, convolutional, size=10)
-    z_c, z_g = Q(X)
+    z_g = Q(X)
 
     z_cat = np.arange(0, n_classes)
     z_cat = np.eye(n_classes)[z_cat].astype('float32')
@@ -53,7 +53,7 @@ def grid_plot(Q, P, data_loader, convolutional):
     if cuda:
         z_cat = z_cat.cuda()
 
-    nx, ny = 3, n_classes
+    nx, ny = 5, n_classes
     plt.subplot()
     gs = gridspec.GridSpec(nx, ny, hspace=0.05, wspace=0.05)
 
@@ -75,6 +75,29 @@ def grid_plot(Q, P, data_loader, convolutional):
         ax.set_aspect('auto')
 
 
+def grid_plot2(Q, P, data_loader):
+    Q.eval()
+    P.eval()
+
+    z1 = Variable(torch.from_numpy(np.arange(-10, 10, 1.5).astype('float32')))
+    z2 = Variable(torch.from_numpy(np.arange(-10, 10, 1.5).astype('float32')))
+    if cuda:
+        z1, z2 = z1.cuda(), z2.cuda()
+
+    nx, ny = len(z1), len(z2)
+    plt.subplot()
+    gs = gridspec.GridSpec(nx, ny, hspace=0.05, wspace=0.05)
+
+    for i, g in enumerate(gs):
+        z = torch.cat((z1[i/ny], z2[i%nx] )).resize(1,2)
+        x = P(z)
+
+        ax = plt.subplot(g)
+        img = np.array(x.data.tolist()).reshape(28,28)
+        ax.imshow(img, )
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_aspect('auto')
 #######
     # z_gauss = z_g[0].resize(1, z_dim)
     # z_gauss0 = z_g[0].resize(1, z_dim)

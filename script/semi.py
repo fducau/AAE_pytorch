@@ -74,9 +74,9 @@ class Q_net(nn.Module):
         self.lin3cat = nn.Linear(N, n_classes)
 
     def forward(self, x):
-        x = F.dropout(self.lin1(x), p=0.2, training=self.training)
+        x = F.dropout(self.lin1(x), p=0.25, training=self.training)
         x = F.relu(x)
-        x = F.dropout(self.lin2(x), p=0.2, training=self.training)
+        x = F.dropout(self.lin2(x), p=0.25, training=self.training)
         x = F.relu(x)
         xgauss = self.lin3gauss(x)
         xcat = F.softmax(self.lin3cat(x))
@@ -94,10 +94,10 @@ class P_net(nn.Module):
 
     def forward(self, x):
         x = self.lin1(x)
-        x = F.dropout(x, p=0.2, training=self.training)
+        x = F.dropout(x, p=0.25, training=self.training)
         x = F.relu(x)
         x = self.lin2(x)
-        x = F.dropout(x, p=0.2, training=self.training)
+        x = F.dropout(x, p=0.25, training=self.training)
         x = self.lin3(x)
         return F.sigmoid(x)
 
@@ -151,14 +151,15 @@ def sample_categorical(batch_size, n_classes=10):
     return Variable(cat)
 
 
-def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
+def report_loss(epoch, D_loss_cat, D_loss_gauss, G_loss, recon_loss):
     '''
     Print loss
     '''
-    print('Epoch-{}; D_loss_gauss: {:.4}; G_loss: {:.4}; recon_loss: {:.4}'.format(epoch,
-                                                                                   D_loss_gauss.data[0],
-                                                                                   G_loss.data[0],
-                                                                                   recon_loss.data[0]))
+    print('Epoch-{}; D_loss_cat: {:.4}; D_loss_gauss: {:.4}; G_loss: {:.4}; recon_loss: {:.4}'.format(epoch,
+                                                                                                      D_loss_cat.data[0],
+                                                                                                      D_loss_gauss.data[0],
+                                                                                                      G_loss.data[0],
+                                                                                                      recon_loss.data[0]))
 
 
 def create_latent(Q, loader):
@@ -366,9 +367,9 @@ def generate_model():
         D_cat = D_net_cat()
 
     # Set learning rates
-    gen_lr = 0.001
+    gen_lr = 0.0006
     semi_lr = 0.001
-    reg_lr = 0.0001
+    reg_lr = 0.0008
 
 
     # Set optimizators
@@ -381,6 +382,7 @@ def generate_model():
     D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr)
     D_cat_solver = optim.Adam(D_cat.parameters(), lr=reg_lr)
 
+    start = time.time()
     for epoch in range(epochs):
         D_loss_cat, D_loss_gauss, G_loss, recon_loss, class_loss = train(P, Q, D_cat,
                                                                          D_gauss, P_decoder,
@@ -396,7 +398,8 @@ def generate_model():
             print('Classification Loss: {:.3}'.format(class_loss.data[0]))
             print('Train accuracy: {} %'.format(train_acc))
             print('Validation accuracy: {} %'.format(val_acc))
-
+    end = time.time()
+    print('Training time: {} seconds'.format(end - start))
 
 if __name__ == '__main__':
     generate_model()
