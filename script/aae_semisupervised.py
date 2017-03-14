@@ -27,7 +27,7 @@ seed = 10
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 n_classes = 10
-z_dim = 2
+z_dim = 10
 X_dim = 784
 y_dim = 10
 train_batch_size = args.batch_size
@@ -271,7 +271,6 @@ def train(P, Q, D_cat, D_gauss, P_decoder, Q_encoder, Q_semi_supervised, Q_gener
             #######################
             if not labeled:
                 z_sample = torch.cat(Q(X), 1)
-                z_sample_noisy = z_sample + Variable(torch.randn(z_sample.size()) / 10.).cuda()
                 X_sample = P(z_sample)
 
                 recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
