@@ -70,6 +70,8 @@ class Q_net(nn.Module):
         self.lin2 = nn.Linear(N, N)
         # Gaussian code (z)
         self.lin3gauss = nn.Linear(N, z_dim)
+        # Categorical code (y)
+        self.lin3cat = nn.Linear(N, n_classes)
 
     def forward(self, x):
         x = F.dropout(self.lin1(x), p=0.2, training=self.training)
@@ -77,8 +79,9 @@ class Q_net(nn.Module):
         x = F.dropout(self.lin2(x), p=0.2, training=self.training)
         x = F.relu(x)
         xgauss = self.lin3gauss(x)
+        xcat = F.softmax(self.lin3cat(x))
 
-        return xgauss
+        return xcat, xgauss
 
 
 # Decoder
@@ -97,6 +100,25 @@ class P_net(nn.Module):
         x = F.dropout(x, p=0.2, training=self.training)
         x = self.lin3(x)
         return F.sigmoid(x)
+
+
+# Discriminator networks
+class D_net_cat(nn.Module):
+    def __init__(self):
+        super(D_net_cat, self).__init__()
+        self.lin1 = nn.Linear(n_classes, N)
+        self.lin2 = nn.Linear(N, N)
+        self.lin3 = nn.Linear(N, 1)
+
+    def forward(self, x):
+        x = self.lin1(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.2, training=self.training)
+        x = self.lin2(x)
+        x = F.relu(x)
+        x = self.lin3(x)
+        return F.sigmoid(x)
+
 
 class D_net_gauss(nn.Module):
     def __init__(self):
@@ -117,9 +139,17 @@ class D_net_gauss(nn.Module):
 ####################
 # Utility functions
 ####################
-def save_model(model, filename):
-    print('Best model so far, saving it...')
-    torch.save(model.state_dict(), filename)
+def sample_categorical(batch_size, n_classes=10):
+    '''
+     Sample from a categorical distribution
+     of size batch_size and # of classes n_classes
+     return: torch.autograd.Variable with the sample
+    '''
+    cat = np.random.randint(0, 10, batch_size)
+    cat = np.eye(n_classes)[cat].astype('float32')
+    cat = torch.from_numpy(cat)
+    return Variable(cat)
+
 
 def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
     '''
@@ -129,6 +159,7 @@ def report_loss(epoch, D_loss_gauss, G_loss, recon_loss):
                                                                                    D_loss_gauss.data[0],
                                                                                    G_loss.data[0],
                                                                                    recon_loss.data[0]))
+
 
 def create_latent(Q, loader):
     '''
@@ -165,10 +196,37 @@ def get_categorical(labels, n_classes=10):
     cat = torch.from_numpy(cat)
     return Variable(cat)
 
+
+def classification_accuracy(Q, data_loader):
+    Q.eval()
+    labels = []
+    test_loss = 0
+    correct = 0
+
+    for batch_idx, (X, target) in enumerate(data_loader):
+        X = X * 0.3081 + 0.1307
+        X.resize_(data_loader.batch_size, X_dim)
+        X, target = Variable(X), Variable(target)
+        if cuda:
+            X, target = X.cuda(), target.cuda()
+
+        labels.extend(target.data.tolist())
+        # Reconstruction phase
+        output = Q(X)[0]
+
+        test_loss += F.nll_loss(output, target).data[0]
+
+        pred = output.data.max(1)[1]
+        correct += pred.eq(target.data).cpu().sum()
+
+    test_loss /= len(data_loader)
+    return 100. * correct / len(data_loader.dataset)
+
+
 ####################
 # Train procedure
 ####################
-def train(P, Q, D_gauss, P_decoder, Q_encoder, Q_generator, D_gauss_solver, data_loader):
+def train(P, Q, D_cat, D_gauss, P_decoder, Q_encoder, Q_semi_supervised, Q_generator, D_cat_solver, D_gauss_solver, train_labeled_loader, train_unlabeled_loader):
     '''
     Train procedure for one epoch.
     '''
@@ -176,123 +234,169 @@ def train(P, Q, D_gauss, P_decoder, Q_encoder, Q_generator, D_gauss_solver, data
     # Set the networks in train mode (apply dropout when needed)
     Q.train()
     P.train()
+    D_cat.train()
     D_gauss.train()
+
+    if train_unlabeled_loader is None:
+        train_unlabeled_loader = train_labeled_loader
 
     # Loop through the labeled and unlabeled dataset getting one batch of samples from each
     # The batch size has to be a divisor of the size of the dataset or it will return
     # invalid samples
-    for X, target in data_loader:
+    for (X_l, target_l), (X_u, target_u) in itertools.izip(train_labeled_loader, train_unlabeled_loader):
 
-        # Load batch and normalize samples to be between 0 and 1
-        X = X * 0.3081 + 0.1307
-        X.resize_(train_batch_size, X_dim)
-        X, target = Variable(X), Variable(target)
-        if cuda:
-            X, target = X.cuda(), target.cuda()
+        for X, target in [(X_u, target_u), (X_l, target_l)]:
+            if target[0] == -1:
+                labeled = False
+            else:
+                labeled = True
 
-        # Init gradients
-        P.zero_grad()
-        Q.zero_grad()
-        D_gauss.zero_grad()
+            # Load batch and normalize samples to be between 0 and 1
+            X = X * 0.3081 + 0.1307
+            X.resize_(train_batch_size, X_dim)
 
-        #######################
-        # Reconstruction phase
-        #######################
-        z_gauss = Q(X)
-        z_cat = get_categorical(target, n_classes=10)
-        if cuda:
-            z_cat = z_cat.cuda()
+            X, target = Variable(X), Variable(target)
+            if cuda:
+                X, target = X.cuda(), target.cuda()
 
-        z_sample = torch.cat((z_cat, z_gauss), 1)
+            # Init gradients
+            P.zero_grad()
+            Q.zero_grad()
+            D_cat.zero_grad()
+            D_gauss.zero_grad()
 
-        X_sample = P(z_sample)
-        recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
+            #######################
+            # Reconstruction phase
+            #######################
+            if not labeled:
+                z_sample = torch.cat(Q(X), 1)
+                z_sample_noisy = z_sample + Variable(torch.randn(z_sample.size()) / 10.).cuda()
+                X_sample = P(z_sample)
 
-        recon_loss.backward()
-        P_decoder.step()
-        Q_encoder.step()
+                recon_loss = F.binary_cross_entropy(X_sample + TINY, X.resize(train_batch_size, X_dim) + TINY)
+                recon_loss = recon_loss
+                recon_loss.backward()
+                P_decoder.step()
+                Q_encoder.step()
 
-        P.zero_grad()
-        Q.zero_grad()
-        D_gauss.zero_grad()
+                P.zero_grad()
+                Q.zero_grad()
+                D_cat.zero_grad()
+                D_gauss.zero_grad()
+                recon_loss = recon_loss
+                #######################
+                # Regularization phase
+                #######################
+                # Discriminator
+                Q.eval()
+                z_real_cat = sample_categorical(train_batch_size, n_classes=n_classes)
+                z_real_gauss = Variable(torch.randn(train_batch_size, z_dim))
+                if cuda:
+                    z_real_cat = z_real_cat.cuda()
+                    z_real_gauss = z_real_gauss.cuda()
 
-        #######################
-        # Regularization phase
-        #######################
-        # Discriminator
-        Q.eval()
-        z_real_gauss = Variable(torch.randn(train_batch_size, z_dim) * 5.)
-        if cuda:
-            z_real_gauss = z_real_gauss.cuda()
+                z_fake_cat, z_fake_gauss = Q(X)
 
-        z_fake_gauss = Q(X)
+                D_real_cat = D_cat(z_real_cat)
+                D_real_gauss = D_gauss(z_real_gauss)
+                D_fake_cat = D_cat(z_fake_cat)
+                D_fake_gauss = D_gauss(z_fake_gauss)
 
-        D_real_gauss = D_gauss(z_real_gauss)
-        D_fake_gauss = D_gauss(z_fake_gauss)
+                D_loss_cat = -torch.mean(torch.log(D_real_cat + TINY) + torch.log(1 - D_fake_cat + TINY))
+                D_loss_gauss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
 
-        D_loss = -torch.mean(torch.log(D_real_gauss + TINY) + torch.log(1 - D_fake_gauss + TINY))
+                D_loss = D_loss_cat + D_loss_gauss
+                D_loss = D_loss
 
-        D_loss.backward()
-        D_gauss_solver.step()
+                D_loss.backward()
+                D_cat_solver.step()
+                D_gauss_solver.step()
 
-        P.zero_grad()
-        Q.zero_grad()
-        D_gauss.zero_grad()
+                P.zero_grad()
+                Q.zero_grad()
+                D_cat.zero_grad()
+                D_gauss.zero_grad()
 
-        # Generator
-        Q.train()
-        z_fake_gauss = Q(X)
+                # Generator
+                Q.train()
+                z_fake_cat, z_fake_gauss = Q(X)
 
-        D_fake_gauss = D_gauss(z_fake_gauss)
-        G_loss = -torch.mean(torch.log(D_fake_gauss + TINY))
+                D_fake_cat = D_cat(z_fake_cat)
+                D_fake_gauss = D_gauss(z_fake_gauss)
 
-        G_loss.backward()
-        Q_generator.step()
+                G_loss = - torch.mean(torch.log(D_fake_cat + TINY)) - torch.mean(torch.log(D_fake_gauss + TINY))
+                G_loss = G_loss
+                G_loss.backward()
+                Q_generator.step()
 
-        P.zero_grad()
-        Q.zero_grad()
-        D_gauss.zero_grad()
+                P.zero_grad()
+                Q.zero_grad()
+                D_cat.zero_grad()
+                D_gauss.zero_grad()
 
-    return D_loss, G_loss, recon_loss
+            #######################
+            # Semi-supervised phase
+            #######################
+            if labeled:
+                pred, _ = Q(X)
+                class_loss = F.cross_entropy(pred, target)
+                class_loss.backward()
+                Q_semi_supervised.step()
 
+                P.zero_grad()
+                Q.zero_grad()
+                D_cat.zero_grad()
+                D_gauss.zero_grad()
 
-def generate_model(savefolder='./'):
+    return D_loss_cat, D_loss_gauss, G_loss, recon_loss, class_loss
+
+def generate_model():
     train_labeled_loader, train_unlabeled_loader, valid_loader = load_data()
     torch.manual_seed(10)
 
     if cuda:
         Q = Q_net().cuda()
         P = P_net().cuda()
+        D_cat = D_net_cat().cuda()
         D_gauss = D_net_gauss().cuda()
     else:
         Q = Q_net()
         P = P_net()
         D_gauss = D_net_gauss()
+        D_cat = D_net_cat()
 
     # Set learning rates
-    gen_lr = 0.0001
-    reg_lr = 0.00005
+    gen_lr = 0.001
+    semi_lr = 0.001
+    reg_lr = 0.0001
+
 
     # Set optimizators
     P_decoder = optim.Adam(P.parameters(), lr=gen_lr)
     Q_encoder = optim.Adam(Q.parameters(), lr=gen_lr)
 
+    Q_semi_supervised = optim.Adam(Q.parameters(), lr=semi_lr)
+
     Q_generator = optim.Adam(Q.parameters(), lr=reg_lr)
     D_gauss_solver = optim.Adam(D_gauss.parameters(), lr=reg_lr)
+    D_cat_solver = optim.Adam(D_cat.parameters(), lr=reg_lr)
 
     for epoch in range(epochs):
-        D_loss_gauss, G_loss, recon_loss = train(P, Q, D_gauss, P_decoder,Q_encoder, 
-                                                 Q_generator,
-                                                 D_gauss_solver,
-                                                 valid_loader)
+        D_loss_cat, D_loss_gauss, G_loss, recon_loss, class_loss = train(P, Q, D_cat,
+                                                                         D_gauss, P_decoder,
+                                                                         Q_encoder, Q_semi_supervised,
+                                                                         Q_generator,
+                                                                         D_cat_solver, D_gauss_solver,
+                                                                         train_labeled_loader,
+                                                                         train_unlabeled_loader)
         if epoch % 10 == 0:
-            report_loss(epoch, D_loss_gauss, G_loss, recon_loss)
-
-    torch.save(Q.state_dict(), savefolder + 'Q_simple')
-    torch.save(P.state_dict(), savefolder + 'P_simple')
-    torch.save(D_gauss.state_dict(), savefolder + 'D_gauss_simple')
+            train_acc = classification_accuracy(Q, train_labeled_loader)
+            val_acc = classification_accuracy(Q, valid_loader)
+            report_loss(epoch, D_loss_cat, D_loss_gauss, G_loss, recon_loss)
+            print('Classification Loss: {:.3}'.format(class_loss.data[0]))
+            print('Train accuracy: {} %'.format(train_acc))
+            print('Validation accuracy: {} %'.format(val_acc))
 
 
 if __name__ == '__main__':
     generate_model()
-
