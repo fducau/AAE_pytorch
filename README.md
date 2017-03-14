@@ -7,6 +7,7 @@
 * torchvision
 * numpy
 * itertools
+* matplotlib
 
 ## Create Datasets
 ```
